@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	password = "password"
-	email    = "email"
-	port     = "port"
-	name     = "name"
-	server   = "server"
+	password    = "password"
+	email       = "email"
+	port        = "port"
+	name        = "name"
+	server      = "server"
+	UserDataNum = 2
 )
 
 type InitData struct {
@@ -130,8 +131,21 @@ func (self *Notifier) readData() {
 func (self *Notifier) parse() {
 	var data []UserData
 	for index := 0; index < len(self.RawUserData); index++ {
-		item := strings.Trim(self.RawUserData[index], " ")
-		data = append(data, UserData{Email: item})
+		items := strings.Split(self.RawUserData[index], ";")
+		dataSet := make(map[string]string)
+		for subIndex := 0; subIndex < len(items); subIndex++ {
+			if len(strings.Trim(items[subIndex], " ")) == 0 {
+				continue
+			}
+			keyValue := strings.Split(items[subIndex], "=")
+			if len(keyValue) != 2 {
+				log.Fatalf("Cannot read data file. Error in line (%i): %s", index+1, self.RawUserData[index])
+				continue
+			}
+			dataSet[keyValue[0]] = keyValue[1]
+		}
+		data = append(data, UserData{Email: strings.Trim(dataSet[email], " "), UserName: dataSet[name]})
+		fmt.Println(email + ": " + dataSet[email] + ", " + name + ": " + dataSet[name])
 	}
 	self.UserData = data
 }
